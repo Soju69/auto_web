@@ -1,0 +1,11 @@
+:root {
+  --aurum-bg-main: #070708;
+  --aurum-bg-graphite: #121216;
+  --aurum-bg-card: rgba(255, 255, 255, 0.055);
+  --aurum-border: rgba(255, 255, 255, 0.09);
+  --aurum-text-main: #ffffff;
+  --aurum-text-soft: #b6b0a6;
+  --aurum-accent: #c8a96a;
+  --aurum-accent-2: #e8e1d2;
+  --aurum-bronze: #8a6a3f;
+}

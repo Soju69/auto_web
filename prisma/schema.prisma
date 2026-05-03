@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  admin
+  sales_manager
+  service_manager
+  mechanic
+  trade_in_appraiser
+}
+
+enum UserStatus {
+  active
+  vacation
+  blocked
+}
+
+enum LeadSource {
+  purchase
+  credit
+  test_drive
+  service
+  trade_in
+  contact
+}
+
+enum LeadStatus {
+  new
+  in_progress
+  meeting_scheduled
+  sold
+  declined
+}
+
+enum LeadPriority {
+  high
+  medium
+  low
+}
+
+enum ServiceOrderStatus {
+  new
+  confirmed
+  in_progress
+  completed
+  canceled
+}
+
+enum TradeInRequestStatus {
+  new
+  inspection
+  offer_prepared
+  accepted
+  declined
+  revaluation
+}
+
+enum InventoryStatus {
+  available
+  reserved
+  sold
+  hidden
+}
+
+model Employee {
+  id                   String          @id
+  name                 String
+  email                String          @unique
+  phone                String?
+  avatarUrl            String?
+  role                 UserRole
+  status               UserStatus
+  workload             Int?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  assignedLeads        Lead[]          @relation("LeadManager")
+  serviceAdvisorOrders ServiceOrder[]  @relation("ServiceAdvisor")
+  mechanicOrders       ServiceOrder[]  @relation("ServiceMechanic")
+  tradeInRequests      TradeInRequest[] @relation("TradeInAppraiser")
+  inventoryItems       InventoryItem[] @relation("InventoryManager")
+}
+
+model Lead {
+  id           String       @id
+  source       LeadSource
+  name         String
+  phone        String
+  email        String?
+  status       LeadStatus
+  priority     LeadPriority
+  createdAt    DateTime
+  updatedAt    DateTime?
+  vehicleLabel String?
+  comment      String?
+  appointmentAt DateTime?
+  payload      Json
+  managerId    String?
+  manager      Employee?    @relation("LeadManager", fields: [managerId], references: [id], onDelete: SetNull)
+}
+
+model ServiceOrder {
+  id            String             @id
+  customerName  String
+  phone         String
+  car           String
+  plate         String
+  serviceType   String
+  appointmentAt DateTime
+  status        ServiceOrderStatus
+  note          String?
+  createdAt     DateTime
+  advisorId     String
+  mechanicId    String?
+  advisor       Employee           @relation("ServiceAdvisor", fields: [advisorId], references: [id], onDelete: Restrict)
+  mechanic      Employee?          @relation("ServiceMechanic", fields: [mechanicId], references: [id], onDelete: SetNull)
+}
+
+model TradeInRequest {
+  id             String                @id
+  customerName   String
+  phone          String
+  currentCar     String
+  desiredCar     String?
+  year           Int
+  mileage        Int
+  vin            String?
+  estimatedValue Int?
+  status         TradeInRequestStatus
+  comment        String?
+  createdAt      DateTime
+  appraiserId    String?
+  appraiser      Employee?             @relation("TradeInAppraiser", fields: [appraiserId], references: [id], onDelete: SetNull)
+  photos         TradeInPhoto[]
+}
+
+model TradeInPhoto {
+  id           String         @id @default(cuid())
+  url          String
+  originalName String
+  mimeType     String
+  size         Int
+  createdAt    DateTime       @default(now())
+  requestId    String
+  request      TradeInRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model InventoryItem {
+  carId      String          @id
+  visible    Boolean
+  featured   Boolean
+  status     InventoryStatus
+  location   String
+  managerId  String?
+  manager    Employee?       @relation("InventoryManager", fields: [managerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
