@@ -1,35 +1,38 @@
 import { z } from "zod";
 
 export const contactFormSchema = z.object({
-  name: z.string().min(2, "Укажите имя"),
+  name: z.string().min(2, "Укажите ФИО"),
   phone: z.string().min(7, "Укажите телефон"),
   topic: z.string().min(2, "Укажите тему"),
-  message: z.string().min(5, "Добавьте короткий комментарий")
+  message: z.string().min(5, "Добавьте короткий комментарий"),
+  clientId: z.string().optional().default("")
 });
 
 export const carInquirySchema = z.object({
-  name: z.string().min(2, "Укажите имя"),
+  name: z.string().min(2, "Укажите ФИО"),
   phone: z.string().min(7, "Укажите телефон"),
   requestType: z.enum(["purchase", "credit", "test-drive"]),
   carId: z.string().min(1),
   carLabel: z.string().min(2),
   comment: z.string().optional().default(""),
   preferredDate: z.string().optional().default(""),
-  preferredTime: z.string().optional().default("")
+  preferredTime: z.string().optional().default(""),
+  clientId: z.string().optional().default("")
 });
 
 export const serviceFormSchema = z.object({
-  name: z.string().min(2, "Укажите имя"),
+  name: z.string().min(2, "Укажите ФИО"),
   phone: z.string().min(7, "Укажите телефон"),
   car: z.string().min(2, "Укажите автомобиль"),
   plate: z.string().min(5, "Укажите госномер"),
   date: z.string().min(1, "Выберите дату"),
   serviceType: z.string().min(1, "Выберите услугу"),
-  note: z.string().optional().default("")
+  note: z.string().optional().default(""),
+  clientId: z.string().optional().default("")
 });
 
 export const tradeInFormSchema = z.object({
-  name: z.string().min(2, "Укажите имя"),
+  name: z.string().min(2, "Укажите ФИО"),
   phone: z.string().min(7, "Укажите телефон"),
   brand: z.string().min(2, "Укажите марку"),
   model: z.string().min(1, "Укажите модель"),
@@ -37,7 +40,8 @@ export const tradeInFormSchema = z.object({
   mileage: z.coerce.number().min(0, "Пробег не может быть отрицательным"),
   vin: z.string().optional().default(""),
   desiredCar: z.string().optional().default(""),
-  comment: z.string().optional().default("")
+  comment: z.string().optional().default(""),
+  clientId: z.string().optional().default("")
 });
 
 export const createEmployeeSchema = z.object({

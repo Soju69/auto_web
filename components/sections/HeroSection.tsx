@@ -48,13 +48,14 @@ export function HeroSection() {
               {platformPillars.map((pillar) => {
                 const Icon = pillar.icon;
                 return (
-                  <span
+                  <Link
                     key={pillar.label}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/64"
+                    href={pillar.href}
+                    className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-semibold text-white/76 transition hover:border-luxury-champagne/50 hover:bg-white/10 hover:text-white"
                   >
                     <Icon className="h-4 w-4 text-luxury-champagne" aria-hidden="true" />
                     {pillar.label}
-                  </span>
+                  </Link>
                 );
               })}
             </div>

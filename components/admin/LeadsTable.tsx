@@ -14,6 +14,8 @@ const sourceOptions: Array<LeadSource | "all"> = [
   "test-drive",
   "service",
   "trade-in",
+  "insurance",
+  "consultation",
   "contact"
 ];
 const statusOptions: Array<LeadStatus | "all"> = [

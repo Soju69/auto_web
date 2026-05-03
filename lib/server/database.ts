@@ -683,7 +683,10 @@ export function updateInventoryRecord(
   return mapInventory(row as Record<string, unknown>);
 }
 
-export function createContactLead(values: ContactFormValues) {
+export function createContactLead(
+  values: ContactFormValues,
+  source: "contact" | "insurance" | "consultation" = "contact"
+) {
   ensureDatabaseSeeded();
   const db = getDatabase();
 
@@ -693,7 +696,7 @@ export function createContactLead(values: ContactFormValues) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     crypto.randomUUID(),
-    "contact",
+    source,
     values.name,
     values.phone,
     null,
@@ -705,7 +708,7 @@ export function createContactLead(values: ContactFormValues) {
     values.message,
     null,
     null,
-    JSON.stringify({ topic: values.topic })
+    JSON.stringify({ topic: values.topic, clientId: values.clientId })
   );
 }
 
@@ -739,7 +742,8 @@ export function createCarInquiryLead(values: CarInquiryValues) {
       requestType: values.requestType,
       carId: values.carId,
       preferredDate: values.preferredDate,
-      preferredTime: values.preferredTime
+      preferredTime: values.preferredTime,
+      clientId: values.clientId
     })
   );
 }
@@ -795,7 +799,8 @@ export function createServiceRequest(values: ServiceFormValues) {
       JSON.stringify({
         plate: values.plate,
         serviceType: values.serviceType,
-        preferredDate: values.date
+        preferredDate: values.date,
+        clientId: values.clientId
       })
     );
   });
@@ -875,7 +880,8 @@ export function createTradeInRequestRecord(
         desiredCar: values.desiredCar,
         vin: values.vin,
         mileage: values.mileage,
-        photosCount: photos.length
+        photosCount: photos.length,
+        clientId: values.clientId
       })
     );
   });

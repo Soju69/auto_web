@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LockKeyhole } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -16,6 +17,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -25,7 +27,7 @@ export function LoginForm() {
   });
 
   function onSubmit() {
-    return undefined;
+    router.push("/admin");
   }
 
   return (
@@ -36,7 +38,9 @@ export function LoginForm() {
         </span>
         <div>
           <h1 className="font-display text-2xl font-semibold">Вход в рабочую зону</h1>
-          <p className="text-sm text-luxury-soft">Используйте корпоративный email и пароль сотрудника.</p>
+          <p className="text-sm text-luxury-soft">
+            Для тестового стенда можно войти любым корректным email и паролем от 8 символов.
+          </p>
         </div>
       </div>
 
@@ -59,7 +63,7 @@ export function LoginForm() {
         />
         {isSubmitSuccessful ? (
           <p role="status" className="text-sm text-luxury-champagne">
-            Данные приняты. Следующим шагом подключим полноценную авторизацию сотрудников.
+            Данные приняты. Открываем рабочую зону.
           </p>
         ) : null}
         <PrimaryButton type="submit" className="w-full">

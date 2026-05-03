@@ -221,6 +221,8 @@ export const leadSourceLabels: Record<LeadSource, string> = {
   "test-drive": "Тест-драйв",
   service: "Сервис",
   "trade-in": "Trade-In",
+  insurance: "Страхование",
+  consultation: "Консультация",
   contact: "Контакт"
 };
 

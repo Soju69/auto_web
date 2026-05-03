@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, CreditCard, Repeat2, WalletCards } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { carInquirySchema, type CarInquiryValues } from "@/lib/form-schemas";
+import { getSavedClientProfile, saveClientProfile } from "@/lib/client-profile";
 import { InputField } from "@/components/ui/InputField";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SecondaryButton } from "@/components/ui/SecondaryButton";
@@ -27,6 +28,7 @@ export function CarInquiryForm({
 }) {
   const [requestType, setRequestType] = useState<RequestType>("purchase");
   const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const {
     register,
     handleSubmit,
@@ -41,24 +43,43 @@ export function CarInquiryForm({
       carLabel,
       comment: "",
       preferredDate: "",
-      preferredTime: ""
+      preferredTime: "",
+      clientId: ""
     }
   });
 
   function selectType(nextType: RequestType) {
     setRequestType(nextType);
     setValue("requestType", nextType);
+    setServerMessage(`Выбран сценарий: ${requestTypeLabels[nextType]}. Заполните ФИО и телефон ниже.`);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
+
+  useEffect(() => {
+    const profile = getSavedClientProfile();
+
+    if (!profile) {
+      return;
+    }
+
+    setValue("name", profile.name);
+    setValue("phone", profile.phone);
+    setValue("clientId", profile.clientId);
+  }, [setValue]);
 
   async function onSubmit(values: CarInquiryValues) {
     setServerMessage(null);
+    const profile = saveClientProfile(values);
 
     const response = await fetch("/api/public/car-inquiry", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(values)
+      body: JSON.stringify({
+        ...values,
+        clientId: profile?.clientId ?? values.clientId
+      })
     });
 
     if (!response.ok) {
@@ -74,7 +95,8 @@ export function CarInquiryForm({
       carLabel,
       comment: "",
       preferredDate: "",
-      preferredTime: ""
+      preferredTime: "",
+      clientId: profile?.clientId ?? values.clientId
     });
     setServerMessage("Заявка зафиксирована. Менеджер увидит её в CRM и свяжется с вами.");
   }
@@ -116,10 +138,11 @@ export function CarInquiryForm({
         </div>
       </div>
 
-      <form id="car-request" onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+      <form ref={formRef} id="car-request" onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
         <input type="hidden" value={carId} {...register("carId")} />
         <input type="hidden" value={carLabel} {...register("carLabel")} />
         <input type="hidden" value={requestType} {...register("requestType")} />
+        <input type="hidden" {...register("clientId")} />
 
         <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-luxury-champagne">
@@ -134,7 +157,7 @@ export function CarInquiryForm({
 
         <InputField
           id="car-inquiry-name"
-          label="Имя"
+          label="ФИО"
           placeholder="Алексей Морозов"
           error={errors.name?.message}
           {...register("name")}

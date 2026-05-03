@@ -26,6 +26,8 @@ enum LeadSource {
   test_drive
   service
   trade_in
+  insurance
+  consultation
   contact
 }
 

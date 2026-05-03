@@ -1,4 +1,12 @@
-export type LeadSource = "purchase" | "credit" | "test-drive" | "service" | "trade-in" | "contact";
+export type LeadSource =
+  | "purchase"
+  | "credit"
+  | "test-drive"
+  | "service"
+  | "trade-in"
+  | "insurance"
+  | "consultation"
+  | "contact";
 
 export type LeadStatus =
   | "new"

@@ -1,10 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { serviceTypes } from "@/lib/constants";
 import { serviceFormSchema, type ServiceFormValues } from "@/lib/form-schemas";
+import { getSavedClientProfile, saveClientProfile } from "@/lib/client-profile";
 import { InputField } from "@/components/ui/InputField";
 import { Label } from "@/components/ui/label";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
@@ -17,20 +18,40 @@ export function ServiceForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitSuccessful, isSubmitting }
   } = useForm<ServiceFormValues>({
-    resolver: zodResolver(serviceFormSchema)
+    resolver: zodResolver(serviceFormSchema),
+    defaultValues: {
+      clientId: ""
+    }
   });
+
+  useEffect(() => {
+    const profile = getSavedClientProfile();
+
+    if (!profile) {
+      return;
+    }
+
+    setValue("name", profile.name);
+    setValue("phone", profile.phone);
+    setValue("clientId", profile.clientId);
+  }, [setValue]);
 
   async function onSubmit(values: ServiceFormValues) {
     setServerMessage(null);
+    const profile = saveClientProfile(values);
 
     const response = await fetch("/api/public/service", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(values)
+      body: JSON.stringify({
+        ...values,
+        clientId: profile?.clientId ?? values.clientId
+      })
     });
 
     if (!response.ok) {
@@ -38,16 +59,26 @@ export function ServiceForm() {
       return;
     }
 
-    reset();
+    reset({
+      name: profile?.name ?? values.name,
+      phone: profile?.phone ?? values.phone,
+      car: "",
+      plate: "",
+      date: "",
+      serviceType: "",
+      note: "",
+      clientId: profile?.clientId ?? values.clientId
+    });
     setServerMessage("Запись отправлена. Мы подтвердим время визита и закрепим мастера.");
   }
 
   return (
     <GlassCard className="p-5 md:p-8">
       <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
+        <input type="hidden" {...register("clientId")} />
         <div className="grid gap-5 md:grid-cols-2">
           <InputField
-            label="Имя клиента"
+            label="ФИО клиента"
             id="service-name"
             placeholder="Алексей Морозов"
             error={errors.name?.message}

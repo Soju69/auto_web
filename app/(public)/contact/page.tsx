@@ -15,12 +15,16 @@ export default function ContactPage() {
               <SectionTitle
                 eyebrow="Контакты"
                 title="Свяжитесь с персональным советником Aurum Motors."
-                description="Поможем подобрать автомобиль, согласовать показ, trade-in, сервис или тест-драйв в удобное для вас время."
+                description="Поможем подобрать автомобиль, согласовать показ, trade-in, сервис, страхование, консультацию или тест-драйв в удобное для вас время."
               />
               <div className="mt-8 grid gap-4">
-                <ContactItem icon={Phone} label="Телефон" value="+7 (495) 220-88-18" />
+                <ContactItem icon={Phone} label="Телефон" value="+7 (473) 200-80-08" />
                 <ContactItem icon={Mail} label="Email" value="concierge@aurummotors.ru" />
-                <ContactItem icon={MapPin} label="Шоурум" value="Москва, Пресненская набережная, 12" />
+                <ContactItem
+                  icon={MapPin}
+                  label="Шоурум"
+                  value="Воронежская область, г.о. город Воронеж, г. Воронеж, пр-кт Патриотов, д. 47, офис 106"
+                />
               </div>
             </div>
           </Reveal>

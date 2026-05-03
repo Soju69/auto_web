@@ -2,9 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UploadCloud } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { tradeInFormSchema, type TradeInFormValues } from "@/lib/form-schemas";
+import { getSavedClientProfile, saveClientProfile } from "@/lib/client-profile";
 import { InputField } from "@/components/ui/InputField";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -18,16 +19,33 @@ export function TradeInForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitSuccessful, isSubmitting }
   } = useForm<TradeInFormValues>({
-    resolver: zodResolver(tradeInFormSchema)
+    resolver: zodResolver(tradeInFormSchema),
+    defaultValues: {
+      clientId: ""
+    }
   });
+
+  useEffect(() => {
+    const profile = getSavedClientProfile();
+
+    if (!profile) {
+      return;
+    }
+
+    setValue("name", profile.name);
+    setValue("phone", profile.phone);
+    setValue("clientId", profile.clientId);
+  }, [setValue]);
 
   async function onSubmit(values: TradeInFormValues) {
     setServerMessage(null);
+    const profile = saveClientProfile(values);
 
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
+    Object.entries({ ...values, clientId: profile?.clientId ?? values.clientId }).forEach(([key, value]) => {
       formData.append(key, String(value ?? ""));
     });
     files.forEach((file) => formData.append("photos", file));
@@ -42,7 +60,18 @@ export function TradeInForm() {
       return;
     }
 
-    reset();
+    reset({
+      name: profile?.name ?? values.name,
+      phone: profile?.phone ?? values.phone,
+      brand: "",
+      model: "",
+      year: undefined,
+      mileage: undefined,
+      vin: "",
+      desiredCar: "",
+      comment: "",
+      clientId: profile?.clientId ?? values.clientId
+    });
     setFiles([]);
     setServerMessage("Заявка отправлена. Фото уже доступны оценщику в админке.");
   }
@@ -50,9 +79,10 @@ export function TradeInForm() {
   return (
     <GlassCard className="p-5 md:p-8">
       <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
+        <input type="hidden" {...register("clientId")} />
         <div className="grid gap-5 md:grid-cols-2">
           <InputField
-            label="Имя"
+            label="ФИО"
             id="trade-name"
             placeholder="Алексей Морозов"
             error={errors.name?.message}

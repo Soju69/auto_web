@@ -1,34 +1,68 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { contactFormSchema, type ContactFormValues } from "@/lib/form-schemas";
+import { getSavedClientProfile, saveClientProfile } from "@/lib/client-profile";
 import { InputField } from "@/components/ui/InputField";
 import { Label } from "@/components/ui/label";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { Textarea } from "@/components/ui/textarea";
 
-export function ContactForm() {
+export function ContactForm({
+  endpoint = "/api/public/contact",
+  defaultTopic = "",
+  submitLabel = "Отправить заявку",
+  successMessage = "Заявка отправлена. Персональный советник свяжется с вами в ближайшее время."
+}: {
+  endpoint?: string;
+  defaultTopic?: string;
+  submitLabel?: string;
+  successMessage?: string;
+}) {
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting, isSubmitSuccessful }
   } = useForm<ContactFormValues>({
-    resolver: zodResolver(contactFormSchema)
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      topic: defaultTopic,
+      clientId: ""
+    }
   });
+
+  useEffect(() => {
+    const profile = getSavedClientProfile();
+
+    if (!profile) {
+      return;
+    }
+
+    setValue("name", profile.name);
+    setValue("phone", profile.phone);
+    setValue("clientId", profile.clientId);
+  }, [setValue]);
 
   async function onSubmit(values: ContactFormValues) {
     setServerMessage(null);
 
-    const response = await fetch("/api/public/contact", {
+    const profile = saveClientProfile(values);
+    const payload = {
+      ...values,
+      clientId: profile?.clientId ?? values.clientId
+    };
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(values)
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -36,16 +70,23 @@ export function ContactForm() {
       return;
     }
 
-    reset();
-    setServerMessage("Заявка отправлена. Персональный советник свяжется с вами в ближайшее время.");
+    reset({
+      name: profile?.name ?? values.name,
+      phone: profile?.phone ?? values.phone,
+      topic: defaultTopic,
+      message: "",
+      clientId: profile?.clientId ?? values.clientId
+    });
+    setServerMessage(successMessage);
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-5">
+      <input type="hidden" {...register("clientId")} />
       <div className="grid gap-5 md:grid-cols-2">
         <InputField
           id="contact-name"
-          label="Имя"
+          label="ФИО"
           placeholder="Алексей Морозов"
           error={errors.name?.message}
           {...register("name")}
@@ -62,9 +103,9 @@ export function ContactForm() {
         id="contact-topic"
         label="Тема"
         placeholder="Показ Zeekr 001"
-        error={errors.topic?.message}
-        {...register("topic")}
-      />
+          error={errors.topic?.message}
+          {...register("topic")}
+        />
       <div className="space-y-2">
         <Label htmlFor="contact-message">Сообщение</Label>
         <Textarea
@@ -84,7 +125,7 @@ export function ContactForm() {
               : "Ответим по наличию, trade-in, тест-драйву или кредиту без лишних ожиданий.")}
         </p>
         <PrimaryButton type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Отправляем..." : "Отправить заявку"}
+          {isSubmitting ? "Отправляем..." : submitLabel}
         </PrimaryButton>
       </div>
     </form>

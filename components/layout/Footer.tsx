@@ -31,11 +31,11 @@ export function Footer() {
         <div>
           <p className="text-sm font-semibold text-white">Консьерж</p>
           <p className="mt-4 text-sm leading-7 text-luxury-soft">
-            +7 (495) 220-88-18
+            +7 (473) 200-80-08
             <br />
             concierge@aurummotors.ru
             <br />
-            Москва, Пресненская набережная, 12
+            Воронежская область, г.о. город Воронеж, г. Воронеж, пр-кт Патриотов, д. 47, офис 106
           </p>
         </div>
       </Container>

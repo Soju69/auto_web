@@ -1,4 +1,14 @@
-import { Car, Clock3, Gauge, ShieldCheck, Sparkles, UsersRound, Wrench } from "lucide-react";
+import {
+  Car,
+  Clock3,
+  Gauge,
+  Headphones,
+  ShieldCheck,
+  Sparkles,
+  Umbrella,
+  UsersRound,
+  Wrench
+} from "lucide-react";
 
 export const BRAND_NAME = "Aurum Motors";
 
@@ -7,8 +17,11 @@ export const navLinks = [
   { href: "/catalog", label: "Каталог" },
   { href: "/trade-in", label: "Trade-In" },
   { href: "/service", label: "Сервис" },
+  { href: "/insurance", label: "Страхование" },
+  { href: "/consultation", label: "Консультация" },
   { href: "/about", label: "О нас" },
-  { href: "/contact", label: "Контакты" }
+  { href: "/contact", label: "Контакты" },
+  { href: "/login", label: "Вход сотрудника" }
 ] as const;
 
 export const whyChooseUs = [
@@ -51,9 +64,11 @@ export const catalogFilters = {
 };
 
 export const platformPillars = [
-  { label: "Каталог", icon: Car },
-  { label: "Тест-драйв", icon: Clock3 },
-  { label: "Trade-In", icon: Gauge },
-  { label: "Сервис", icon: Wrench },
-  { label: "Подбор сделки", icon: UsersRound }
+  { label: "Каталог", href: "/catalog", icon: Car },
+  { label: "Тест-драйв", href: "/catalog/kia-k5-gt-line", icon: Clock3 },
+  { label: "Trade-In", href: "/trade-in", icon: Gauge },
+  { label: "Сервис", href: "/service", icon: Wrench },
+  { label: "Страхование", href: "/insurance", icon: Umbrella },
+  { label: "Консультация", href: "/consultation", icon: Headphones },
+  { label: "Подбор сделки", href: "/contact", icon: UsersRound }
 ];
