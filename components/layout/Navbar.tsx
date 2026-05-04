@@ -1,10 +1,37 @@
+"use client";
+
 import Link from "next/link";
 import { Menu, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getAuthSession } from "@/lib/auth-session";
+import { getSavedClientProfile } from "@/lib/client-profile";
 import { BRAND_NAME, navLinks } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/Container";
 
 export function Navbar() {
+  const [accountHref, setAccountHref] = useState("/login");
+  const [accountLabel, setAccountLabel] = useState("Вход / регистрация");
+
+  useEffect(() => {
+    const session = getAuthSession();
+
+    if (session?.type === "employee") {
+      setAccountHref("/admin");
+      setAccountLabel("Админка");
+      return;
+    }
+
+    if (session?.type === "client" || getSavedClientProfile()) {
+      setAccountHref("/account");
+      setAccountLabel("Личный кабинет");
+      return;
+    }
+
+    setAccountHref("/login");
+    setAccountLabel("Вход / регистрация");
+  }, []);
+
   return (
     <header className="fixed inset-x-0 top-4 z-50">
       <Container>
@@ -35,7 +62,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-2">
             <Button asChild variant="accent" size="sm">
-              <Link href="/login">Вход / регистрация</Link>
+              <Link href={accountHref}>{accountLabel}</Link>
             </Button>
             <Button
               variant="glass"

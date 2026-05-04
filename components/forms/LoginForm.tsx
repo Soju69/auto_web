@@ -10,7 +10,12 @@ import type { UseFormRegisterReturn } from "react-hook-form";
 import { z } from "zod";
 import { roleLabels } from "@/data/crm";
 import { clearAuthSession, getDefaultAdminPath, saveAuthSession } from "@/lib/auth-session";
-import { getSavedClientProfile, saveClientProfile } from "@/lib/client-profile";
+import {
+  findRegisteredClientByPhone,
+  getSavedClientProfile,
+  registerClientProfile,
+  updateClientProfile
+} from "@/lib/client-profile";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { InputField } from "@/components/ui/InputField";
@@ -42,6 +47,8 @@ const employeeRoleByEmail: Record<string, UserRole> = {
   "tradein2@autocitypro.ru": "trade_in_appraiser",
   "manager@autocitypro.ru": "sales_manager"
 };
+
+const employeePassword = "admin123";
 
 const optionalEmailSchema = z
   .string()
@@ -188,6 +195,11 @@ export function LoginForm() {
     }
 
     if (isEmployeeIdentifier(identifier)) {
+      if (values.password !== employeePassword) {
+        setServerMessage("Неверный пароль сотрудника.");
+        return;
+      }
+
       const email = normalizeEmail(identifier);
       const role = employeeRoleByEmail[email] ?? "sales_manager";
       saveAuthSession({
@@ -200,16 +212,27 @@ export function LoginForm() {
       return;
     }
 
-    const savedProfile = getSavedClientProfile();
+    const registeredClient = findRegisteredClientByPhone(identifier);
     const enteredPhone = normalizePhone(identifier);
 
-    if (savedProfile && enteredPhone && normalizePhone(savedProfile.phone) === enteredPhone) {
+    if (registeredClient && enteredPhone && normalizePhone(registeredClient.phone) === enteredPhone) {
+      if (values.password !== registeredClient.password) {
+        setServerMessage("Неверный пароль клиента.");
+        return;
+      }
+
       saveAuthSession({
         type: "client",
-        clientId: savedProfile.clientId,
-        name: savedProfile.name,
-        phone: savedProfile.phone,
-        email: savedProfile.email
+        clientId: registeredClient.clientId,
+        name: registeredClient.name,
+        phone: registeredClient.phone,
+        email: registeredClient.email
+      });
+      updateClientProfile({
+        clientId: registeredClient.clientId,
+        name: registeredClient.name,
+        phone: registeredClient.phone,
+        email: registeredClient.email
       });
       router.push("/account");
       return;
@@ -241,9 +264,20 @@ export function LoginForm() {
       return;
     }
 
-    const profile = saveClientProfile({
-      ...values,
-      email: values.email || undefined
+    const existingClient = findRegisteredClientByPhone(values.phone);
+
+    if (existingClient) {
+      setServerMessage("Клиент с таким телефоном уже зарегистрирован. Войдите через вкладку «Войти».");
+      setMode("login");
+      loginForm.setValue("identifier", values.phone);
+      return;
+    }
+
+    const profile = registerClientProfile({
+      name: values.name,
+      phone: values.phone,
+      email: values.email || undefined,
+      password: values.password
     });
 
     if (profile) {
@@ -299,7 +333,7 @@ export function LoginForm() {
           <InputField
             label="Email сотрудника или телефон клиента"
             id="auth-identifier"
-            placeholder="admin@autocitypro.ru или +7 473 200-80-08"
+            placeholder="Введите email или телефон"
             error={loginForm.formState.errors.identifier?.message}
             {...loginForm.register("identifier")}
           />

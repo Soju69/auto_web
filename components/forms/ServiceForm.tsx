@@ -12,6 +12,10 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Textarea } from "@/components/ui/textarea";
 
+function toDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 export function ServiceForm() {
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const {
@@ -26,6 +30,8 @@ export function ServiceForm() {
       clientId: ""
     }
   });
+  const minServiceDate = toDateInputValue(new Date());
+  const maxServiceDate = toDateInputValue(new Date(new Date().setFullYear(new Date().getFullYear() + 1)));
 
   useEffect(() => {
     const profile = getSavedClientProfile();
@@ -109,6 +115,8 @@ export function ServiceForm() {
             label="Желаемая дата"
             id="service-date"
             type="date"
+            min={minServiceDate}
+            max={maxServiceDate}
             error={errors.date?.message}
             {...register("date")}
           />

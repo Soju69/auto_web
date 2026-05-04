@@ -13,6 +13,7 @@ import {
 import { cars, getCarById } from "@/data/cars";
 import { formatCurrency, formatMileage } from "@/lib/utils";
 import { CarInquiryForm } from "@/components/forms/CarInquiryForm";
+import { CarGallery } from "@/components/cars/CarGallery";
 import { CarSpecs } from "@/components/cars/CarSpecs";
 import { Container } from "@/components/layout/Container";
 import { Reveal } from "@/components/shared/Reveal";
@@ -52,40 +53,7 @@ export default async function CarDetailsPage({
         <div className="grid gap-8 xl:grid-cols-[1fr_390px]">
           <div className="grid gap-8">
             <Reveal>
-              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.045] p-3 shadow-2xl shadow-black/45 backdrop-blur-2xl md:p-5">
-                <div
-                  className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_18%,rgba(200,169,106,0.18),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.08),transparent_42%)]"
-                  aria-hidden="true"
-                />
-                <div className="relative grid gap-3 lg:grid-cols-[1.4fr_0.6fr]">
-                  <div className="relative min-h-[380px] overflow-hidden rounded-[2rem] bg-black/30">
-                    <img
-                      src={car.gallery[0]}
-                      alt={`${title}, главное фото`}
-                      className="h-full min-h-[380px] w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#070708] via-black/10 to-transparent" />
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <p className="inline-flex rounded-full border border-white/10 bg-black/35 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-luxury-champagne backdrop-blur-xl">
-                        {car.badge}
-                      </p>
-                      <h1 className="mt-5 max-w-3xl font-display text-5xl font-semibold leading-[0.92] tracking-[-0.065em] md:text-7xl">
-                        {title}
-                      </h1>
-                    </div>
-                  </div>
-                  <div className="grid gap-3">
-                    {car.gallery.slice(1, 3).map((image, index) => (
-                      <img
-                        key={image}
-                        src={image}
-                        alt={`${title}, фото ${index + 2}`}
-                        className="h-[188px] w-full rounded-[1.5rem] object-cover lg:h-full"
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <CarGallery title={title} badge={car.badge} images={car.gallery} />
             </Reveal>
 
             <Reveal delay={0.08}>

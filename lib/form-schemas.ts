@@ -1,5 +1,21 @@
 import { z } from "zod";
 
+function isValidServiceDate(value: string) {
+  const selectedDate = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(selectedDate.getTime())) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const maxDate = new Date(today);
+  maxDate.setFullYear(maxDate.getFullYear() + 1);
+
+  return selectedDate >= today && selectedDate <= maxDate;
+}
+
 export const contactFormSchema = z.object({
   name: z.string().min(2, "Укажите ФИО"),
   phone: z.string().min(7, "Укажите телефон"),
@@ -25,7 +41,7 @@ export const serviceFormSchema = z.object({
   phone: z.string().min(7, "Укажите телефон"),
   car: z.string().min(2, "Укажите автомобиль"),
   plate: z.string().min(5, "Укажите госномер"),
-  date: z.string().min(1, "Выберите дату"),
+  date: z.string().min(1, "Выберите дату").refine(isValidServiceDate, "Выберите дату в пределах ближайшего года"),
   serviceType: z.string().min(1, "Выберите услугу"),
   note: z.string().optional().default(""),
   clientId: z.string().optional().default("")
