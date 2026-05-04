@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LockKeyhole, UserPlus } from "lucide-react";
+import { LockKeyhole, RefreshCw, UserPlus, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import type { UseFormRegisterReturn } from "react-hook-form";
 import { z } from "zod";
 import { roleLabels } from "@/data/crm";
 import { clearAuthSession, getDefaultAdminPath, saveAuthSession } from "@/lib/auth-session";
@@ -50,20 +52,36 @@ const optionalEmailSchema = z
 
 const loginSchema = z.object({
   identifier: z.string().min(3, "Укажите email сотрудника или телефон клиента"),
-  password: z.string().min(6, "Минимум 6 символов")
+  password: z.string().min(6, "Минимум 6 символов"),
+  captchaAnswer: z.string().min(1, "Ответьте на проверочный вопрос")
 });
 
 const clientRegisterSchema = z.object({
   name: z.string().min(2, "Укажите ФИО"),
-  phone: z.string().min(7, "Укажите телефон").refine((value) => normalizePhone(value).length >= 7, "Укажите корректный телефон"),
+  phone: z
+    .string()
+    .min(7, "Укажите телефон")
+    .refine((value) => normalizePhone(value).length >= 7, "Укажите корректный телефон"),
   email: optionalEmailSchema,
-  password: z.string().min(6, "Минимум 6 символов")
+  password: z.string().min(6, "Минимум 6 символов"),
+  captchaAnswer: z.string().min(1, "Ответьте на проверочный вопрос")
 });
 
 type AuthMode = "login" | "client-register";
 type LoginFormValues = z.infer<typeof loginSchema>;
 type ClientRegisterValues = z.infer<typeof clientRegisterSchema>;
 type EmployeeIdentityConflict = "phone" | "email" | null;
+type CaptchaChallenge = {
+  a: number;
+  b: number;
+};
+
+function createCaptchaChallenge(): CaptchaChallenge {
+  return {
+    a: Math.floor(Math.random() * 8) + 2,
+    b: Math.floor(Math.random() * 8) + 2
+  };
+}
 
 function normalizePhone(value: string) {
   return value.replace(/\D/g, "");
@@ -119,6 +137,7 @@ export function LoginForm() {
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("login");
   const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const [captcha, setCaptcha] = useState<CaptchaChallenge>(() => createCaptchaChallenge());
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema)
@@ -145,11 +164,28 @@ export function LoginForm() {
   function switchMode(nextMode: AuthMode) {
     setMode(nextMode);
     setServerMessage(null);
+    refreshCaptcha();
+  }
+
+  function refreshCaptcha() {
+    setCaptcha(createCaptchaChallenge());
+    loginForm.setValue("captchaAnswer", "");
+    clientRegisterForm.setValue("captchaAnswer", "");
+  }
+
+  function isCaptchaValid(answer: string) {
+    return Number(answer.trim()) === captcha.a + captcha.b;
   }
 
   async function onLoginSubmit(values: LoginFormValues) {
     const identifier = values.identifier.trim();
     clearAuthSession();
+
+    if (!isCaptchaValid(values.captchaAnswer)) {
+      setServerMessage("Проверка на робота не пройдена. Решите пример ещё раз.");
+      refreshCaptcha();
+      return;
+    }
 
     if (isEmployeeIdentifier(identifier)) {
       const email = normalizeEmail(identifier);
@@ -187,6 +223,12 @@ export function LoginForm() {
   async function onClientRegisterSubmit(values: ClientRegisterValues) {
     setServerMessage(null);
 
+    if (!isCaptchaValid(values.captchaAnswer)) {
+      setServerMessage("Проверка на робота не пройдена. Решите пример ещё раз.");
+      refreshCaptcha();
+      return;
+    }
+
     const conflict = await getEmployeeConflict({ phone: values.phone, email: values.email });
 
     if (conflict === "phone") {
@@ -218,7 +260,14 @@ export function LoginForm() {
   }
 
   return (
-    <GlassCard className="w-full max-w-2xl p-6 md:p-8">
+    <GlassCard className="relative w-full max-w-2xl p-6 md:p-8">
+      <Link
+        href="/"
+        aria-label="Закрыть форму входа"
+        className="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.06] text-white/55 transition hover:border-luxury-champagne/45 hover:text-luxury-platinum"
+      >
+        <X className="h-4 w-4" aria-hidden="true" />
+      </Link>
       <div className="mb-8 flex items-start gap-3">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
           {mode === "login" ? (
@@ -262,6 +311,12 @@ export function LoginForm() {
             error={loginForm.formState.errors.password?.message}
             {...loginForm.register("password")}
           />
+          <CaptchaField
+            challenge={captcha}
+            error={loginForm.formState.errors.captchaAnswer?.message}
+            onRefresh={refreshCaptcha}
+            register={loginForm.register("captchaAnswer")}
+          />
           <StatusMessage message={serverMessage} />
           <PrimaryButton type="submit" className="w-full justify-center">
             Войти
@@ -301,6 +356,12 @@ export function LoginForm() {
             error={clientRegisterForm.formState.errors.password?.message}
             {...clientRegisterForm.register("password")}
           />
+          <CaptchaField
+            challenge={captcha}
+            error={clientRegisterForm.formState.errors.captchaAnswer?.message}
+            onRefresh={refreshCaptcha}
+            register={clientRegisterForm.register("captchaAnswer")}
+          />
           <StatusMessage message={serverMessage} />
           <PrimaryButton type="submit" className="w-full justify-center">
             Зарегистрироваться клиентом
@@ -308,6 +369,41 @@ export function LoginForm() {
         </form>
       ) : null}
     </GlassCard>
+  );
+}
+
+function CaptchaField({
+  challenge,
+  error,
+  onRefresh,
+  register
+}: {
+  challenge: CaptchaChallenge;
+  error?: string;
+  onRefresh: () => void;
+  register: UseFormRegisterReturn<"captchaAnswer">;
+}) {
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-end gap-3">
+        <InputField
+          label={`Проверка: ${challenge.a} + ${challenge.b} = ?`}
+          id="captcha-answer"
+          inputMode="numeric"
+          placeholder="Ответ"
+          error={error}
+          {...register}
+        />
+        <button
+          type="button"
+          onClick={onRefresh}
+          aria-label="Обновить проверочный вопрос"
+          className="mb-[1px] grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.06] text-white/65 transition hover:border-luxury-champagne/45 hover:text-luxury-platinum"
+        >
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
   );
 }
 
