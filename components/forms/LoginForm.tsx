@@ -20,35 +20,7 @@ import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { InputField } from "@/components/ui/InputField";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import type { User, UserRole } from "@/types/user";
-
-const employeeEmails = [
-  "admin@autocitypro.ru",
-  "sales1@autocitypro.ru",
-  "sales2@autocitypro.ru",
-  "service@autocitypro.ru",
-  "service2@autocitypro.ru",
-  "mechanic@autocitypro.ru",
-  "mechanic2@autocitypro.ru",
-  "tradein@autocitypro.ru",
-  "tradein2@autocitypro.ru",
-  "manager@autocitypro.ru"
-];
-
-const employeeRoleByEmail: Record<string, UserRole> = {
-  "admin@autocitypro.ru": "admin",
-  "sales1@autocitypro.ru": "sales_manager",
-  "sales2@autocitypro.ru": "sales_manager",
-  "service@autocitypro.ru": "service_manager",
-  "service2@autocitypro.ru": "service_manager",
-  "mechanic@autocitypro.ru": "mechanic",
-  "mechanic2@autocitypro.ru": "mechanic",
-  "tradein@autocitypro.ru": "trade_in_appraiser",
-  "tradein2@autocitypro.ru": "trade_in_appraiser",
-  "manager@autocitypro.ru": "sales_manager"
-};
-
-const employeePassword = "admin123";
+import type { User } from "@/types/user";
 
 const optionalEmailSchema = z
   .string()
@@ -98,9 +70,8 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
-function isEmployeeIdentifier(identifier: string) {
-  const normalized = normalizeEmail(identifier);
-  return employeeEmails.includes(normalized) || normalized.endsWith("@autocitypro.ru");
+function looksLikePhone(value: string) {
+  return normalizePhone(value).length >= 7 && !/[a-zа-яё]/i.test(value);
 }
 
 async function getEmployees() {
@@ -111,6 +82,12 @@ async function getEmployees() {
   }
 
   return (await response.json()) as User[];
+}
+
+async function findEmployeeByEmail(email: string) {
+  const normalizedEmail = normalizeEmail(email);
+  const employees = await getEmployees();
+  return employees.find((employee) => normalizeEmail(employee.email) === normalizedEmail) ?? null;
 }
 
 async function getEmployeeConflict({
@@ -194,21 +171,31 @@ export function LoginForm() {
       return;
     }
 
-    if (isEmployeeIdentifier(identifier)) {
-      if (values.password !== employeePassword) {
+    if (identifier.includes("@")) {
+      const employee = await findEmployeeByEmail(identifier);
+
+      if (!employee) {
+        setServerMessage("Сотрудник с таким email не найден.");
+        return;
+      }
+
+      if (employee.status === "blocked") {
+        setServerMessage("Учетная запись сотрудника заблокирована.");
+        return;
+      }
+
+      if (values.password !== employee.password) {
         setServerMessage("Неверный пароль сотрудника.");
         return;
       }
 
-      const email = normalizeEmail(identifier);
-      const role = employeeRoleByEmail[email] ?? "sales_manager";
       saveAuthSession({
         type: "employee",
-        name: roleLabels[role],
-        email,
-        role
+        name: employee.name || roleLabels[employee.role],
+        email: employee.email,
+        role: employee.role
       });
-      router.push(getDefaultAdminPath(role));
+      router.push(getDefaultAdminPath(employee.role));
       return;
     }
 
@@ -240,7 +227,7 @@ export function LoginForm() {
 
     setServerMessage("Клиент с таким телефоном не найден на этом устройстве. Зарегистрируйтесь как клиент.");
     setMode("client-register");
-    clientRegisterForm.setValue("phone", identifier);
+    clientRegisterForm.setValue("phone", looksLikePhone(identifier) ? identifier : "");
   }
 
   async function onClientRegisterSubmit(values: ClientRegisterValues) {

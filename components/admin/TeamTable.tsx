@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createEmployeeSchema, type CreateEmployeeValues } from "@/lib/form-schemas";
@@ -30,6 +31,8 @@ const statuses: UserStatus[] = ["active", "vacation", "blocked"];
 export function TeamTable() {
   const users = useAdminStore((state) => state.users);
   const createUser = useAdminStore((state) => state.createUser);
+  const updateUserStatus = useAdminStore((state) => state.updateUserStatus);
+  const deleteUser = useAdminStore((state) => state.deleteUser);
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const {
     register,
@@ -41,7 +44,8 @@ export function TeamTable() {
     defaultValues: {
       role: "sales_manager",
       status: "active",
-      phone: ""
+      phone: "",
+      password: "admin123"
     }
   });
 
@@ -54,6 +58,7 @@ export function TeamTable() {
         name: "",
         email: "",
         phone: "",
+        password: "admin123",
         role: "sales_manager",
         status: "active"
       });
@@ -64,13 +69,37 @@ export function TeamTable() {
     }
   }
 
+  async function onStatusChange(id: string, status: UserStatus) {
+    setServerMessage(null);
+
+    try {
+      await updateUserStatus(id, status);
+      setServerMessage("Статус сотрудника обновлен.");
+    } catch (error) {
+      setServerMessage("Не удалось изменить статус сотрудника.");
+      console.error(error);
+    }
+  }
+
+  async function onDelete(id: string) {
+    setServerMessage(null);
+
+    try {
+      await deleteUser(id);
+      setServerMessage("Сотрудник удален из команды.");
+    } catch (error) {
+      setServerMessage(error instanceof Error ? error.message : "Не удалось удалить сотрудника.");
+      console.error(error);
+    }
+  }
+
   return (
     <GlassCard className="p-5">
       <div className="grid gap-6 border-b border-white/10 pb-5 xl:grid-cols-[1.1fr_0.9fr]">
         <div>
           <h2 className="font-display text-2xl font-semibold">Сотрудники и права</h2>
           <p className="mt-2 text-sm text-luxury-soft">
-            Добавление сотрудников и просмотр ролей. Изменение роли существующего сотрудника в демо-версии недоступно без отдельной процедуры администратора.
+            Добавление сотрудников, выдача пароля и управление статусом доступа.
           </p>
         </div>
 
@@ -89,6 +118,14 @@ export function TeamTable() {
               placeholder="manager@autocitypro.ru"
               error={errors.email?.message}
               {...register("email")}
+            />
+            <InputField
+              id="team-password"
+              label="Пароль"
+              type="password"
+              placeholder="Минимум 6 символов"
+              error={errors.password?.message}
+              {...register("password")}
             />
           </div>
 
@@ -148,7 +185,8 @@ export function TeamTable() {
               <th className="pb-3 pr-6 font-medium">Сотрудник</th>
               <th className="pb-3 pr-6 font-medium">Роль</th>
               <th className="pb-3 pr-6 font-medium">Статус</th>
-              <th className="pb-3 pr-0 font-medium">Нагрузка</th>
+              <th className="pb-3 pr-6 font-medium">Нагрузка</th>
+              <th className="pb-3 pr-0 font-medium">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -165,15 +203,33 @@ export function TeamTable() {
                   </div>
                 </td>
                 <td className="py-4 pr-6">
-                  <div className="inline-flex min-h-11 min-w-[220px] items-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white">
-                    {statusLabels[user.status]}
-                  </div>
+                  <select
+                    value={user.status}
+                    onChange={(event) => void onStatusChange(user.id, event.target.value as UserStatus)}
+                    className="h-11 min-w-[220px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm text-white outline-none transition focus:border-luxury-champagne/70 focus:ring-2 focus:ring-luxury-champagne/20"
+                  >
+                    {statuses.map((status) => (
+                      <option key={status} value={status} className="bg-luxury-main">
+                        {statusLabels[status]}
+                      </option>
+                    ))}
+                  </select>
                 </td>
-                <td className="py-4 pr-0">
+                <td className="py-4 pr-6">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
                     <p className="font-medium text-white">{user.workload ?? 0} задач</p>
                     <p className="mt-1 text-sm text-luxury-soft">{statusLabels[user.status]}</p>
                   </div>
+                </td>
+                <td className="py-4 pr-0">
+                  <button
+                    type="button"
+                    onClick={() => void onDelete(user.id)}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-red-300/20 bg-red-400/10 px-4 text-sm font-semibold text-red-200 transition hover:border-red-300/45 hover:bg-red-400/15"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    Удалить
+                  </button>
                 </td>
               </tr>
             ))}

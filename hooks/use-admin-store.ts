@@ -36,10 +36,12 @@ type AdminStore = {
   assignInventoryManager: (carId: string, managerId: string) => Promise<void>;
   updateUserRole: (id: string, role: UserRole) => Promise<void>;
   updateUserStatus: (id: string, status: UserStatus) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
   createUser: (payload: {
     name: string;
     email: string;
     phone?: string;
+    password: string;
     role: UserRole;
     status: UserStatus;
   }) => Promise<void>;
@@ -256,6 +258,16 @@ export const useAdminStore = create<AdminStore>((set) => ({
 
     set((state) => ({
       users: state.users.map((item) => (item.id === id ? user : item))
+    }));
+  },
+  deleteUser: async (id) => {
+    await fetchJson<User>(`/api/admin/users/${id}`, {
+      method: "DELETE"
+    });
+
+    set((state) => ({
+      users: state.users.filter((item) => item.id !== id),
+      currentUserId: state.currentUserId === id ? state.users.find((item) => item.id !== id)?.id ?? "" : state.currentUserId
     }));
   },
   createUser: async (payload) => {

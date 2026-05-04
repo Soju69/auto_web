@@ -19,7 +19,7 @@ import { SecondaryButton } from "@/components/ui/SecondaryButton";
 const actions = [
   { href: "/catalog", label: "Выбрать автомобиль", icon: Car },
   { href: "/service", label: "Записаться в сервис", icon: Wrench },
-  { href: "/trade-in", label: "Оценить trade-in", icon: ClipboardList },
+  { href: "/trade-in", label: "Оценить авто Trade-In", icon: ClipboardList },
   { href: "/insurance", label: "Оформить страхование", icon: ShieldCheck }
 ];
 
@@ -224,7 +224,7 @@ export function ClientAccount() {
                 <Icon className="h-5 w-5 text-luxury-champagne" aria-hidden="true" />
                 <p className="mt-5 font-display text-2xl font-semibold">{action.label}</p>
                 <p className="mt-2 text-sm leading-6 text-luxury-soft">
-                  ФИО и телефон будут подставлены в форму автоматически.
+                  Контактные данные из личного кабинета подставятся в заявку автоматически.
                 </p>
               </Link>
             );

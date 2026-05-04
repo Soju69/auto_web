@@ -212,6 +212,7 @@ export const adminNav = [
   { href: "/admin/service", label: "Сервис", description: "Очередь и записи" },
   { href: "/admin/trade-in", label: "Trade-In", description: "Оценка и обмен" },
   { href: "/admin/catalog", label: "Каталог", description: "Наличие и статусы" },
+  { href: "/admin/warehouse", label: "Склад", description: "Запчасти и оборудование" },
   { href: "/admin/team", label: "Команда", description: "Роли и загрузка" }
 ] as const;
 
@@ -235,7 +236,7 @@ export const leadStatusLabels: Record<LeadStatus, string> = {
 };
 
 export const roleLabels: Record<UserRole, string> = {
-  admin: "Админ",
+  admin: "Администратор",
   sales_manager: "Менеджер продаж",
   service_manager: "Сервис-менеджер",
   mechanic: "Механик",

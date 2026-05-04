@@ -13,6 +13,7 @@ export type User = {
   email: string;
   role: UserRole;
   phone?: string;
+  password?: string;
   avatarUrl?: string;
   status: UserStatus;
   workload?: number;

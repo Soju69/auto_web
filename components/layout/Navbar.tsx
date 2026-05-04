@@ -18,7 +18,7 @@ export function Navbar() {
 
     if (session?.type === "employee") {
       setAccountHref("/admin");
-      setAccountLabel("Админка");
+      setAccountLabel(session.role === "admin" ? "Администратор" : "Кабинет сотрудника");
       return;
     }
 

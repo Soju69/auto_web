@@ -115,6 +115,7 @@ function initializeDatabase(db: DatabaseSync) {
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
       phone TEXT,
+      password TEXT NOT NULL DEFAULT 'admin123',
       avatar_url TEXT,
       role TEXT NOT NULL,
       status TEXT NOT NULL,
@@ -198,6 +199,11 @@ function initializeDatabase(db: DatabaseSync) {
       FOREIGN KEY(manager_id) REFERENCES employees(id) ON DELETE SET NULL
     );
   `);
+
+  const employeeColumns = db.prepare("PRAGMA table_info(employees)").all() as Array<{ name: string }>;
+  if (!employeeColumns.some((column) => column.name === "password")) {
+    db.exec("ALTER TABLE employees ADD COLUMN password TEXT NOT NULL DEFAULT 'admin123'");
+  }
 }
 
 function withTransaction<T>(callback: (db: DatabaseSync) => T) {
@@ -220,6 +226,7 @@ function mapUser(row: Record<string, unknown>): User {
     name: String(row.name),
     email: String(row.email),
     phone: row.phone ? String(row.phone) : undefined,
+    password: row.password ? String(row.password) : "admin123",
     avatarUrl: row.avatar_url ? String(row.avatar_url) : undefined,
     role: row.role as User["role"],
     status: row.status as User["status"],
@@ -325,8 +332,8 @@ export function ensureDatabaseSeeded() {
 
   withTransaction((tx) => {
     const employeeStatement = tx.prepare(`
-      INSERT INTO employees (id, name, email, phone, avatar_url, role, status, workload, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO employees (id, name, email, phone, password, avatar_url, role, status, workload, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const user of crmUsers) {
@@ -336,6 +343,7 @@ export function ensureDatabaseSeeded() {
         user.name,
         user.email,
         user.phone ?? null,
+        user.password ?? "admin123",
         user.avatarUrl ?? null,
         user.role,
         user.status,
@@ -501,19 +509,74 @@ export function createEmployee(values: CreateEmployeeValues) {
   const now = new Date().toISOString();
 
   db.prepare(`
-    INSERT INTO employees (id, name, email, phone, avatar_url, role, status, workload, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, values.name, values.email, values.phone || null, null, values.role, values.status, 0, now, now);
+    INSERT INTO employees (id, name, email, phone, password, avatar_url, role, status, workload, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, values.name, values.email, values.phone || null, values.password, null, values.role, values.status, 0, now, now);
 
   return {
     id,
     name: values.name,
     email: values.email,
     phone: values.phone || undefined,
+    password: values.password,
     role: values.role,
     status: values.status,
     workload: 0
   } satisfies User;
+}
+
+export function deleteEmployee(id: string) {
+  ensureDatabaseSeeded();
+  const db = getDatabase();
+
+  const employee = db.prepare("SELECT * FROM employees WHERE id = ?").get(id);
+
+  if (!employee) {
+    throw new Error("Сотрудник не найден");
+  }
+
+  const employeeRow = mapUser(employee as Record<string, unknown>);
+
+  if (employeeRow.role === "admin") {
+    const adminCount = Number(
+      (db.prepare("SELECT COUNT(*) as count FROM employees WHERE role = 'admin'").get() as { count?: number } | undefined)
+        ?.count ?? 0
+    );
+    if (adminCount <= 1) {
+      throw new Error("Нельзя удалить последнего администратора");
+    }
+  }
+
+  const advisorFallbackId = getFallbackEmployeeId("service_manager", id);
+  const assignedAdvisorOrders = Number(
+    (db.prepare("SELECT COUNT(*) as count FROM service_orders WHERE advisor_id = ?").get(id) as { count?: number } | undefined)
+      ?.count ?? 0
+  );
+
+  if (assignedAdvisorOrders > 0 && !advisorFallbackId) {
+    throw new Error("Нельзя удалить сервис-менеджера без запасного ответственного");
+  }
+
+  withTransaction((transaction) => {
+    transaction.prepare("UPDATE leads SET manager_id = NULL WHERE manager_id = ?").run(id);
+    if (advisorFallbackId) {
+      transaction.prepare("UPDATE service_orders SET advisor_id = ? WHERE advisor_id = ?").run(advisorFallbackId, id);
+    }
+    transaction.prepare("UPDATE service_orders SET mechanic_id = NULL WHERE mechanic_id = ?").run(id);
+    transaction.prepare("UPDATE trade_in_requests SET appraiser_id = NULL WHERE appraiser_id = ?").run(id);
+    transaction.prepare("UPDATE inventory_items SET manager_id = NULL WHERE manager_id = ?").run(id);
+    transaction.prepare("DELETE FROM employees WHERE id = ?").run(id);
+  });
+
+  return employeeRow;
+}
+
+function getFallbackEmployeeId(role: User["role"], excludedId: string) {
+  const row = getDatabase()
+    .prepare("SELECT id FROM employees WHERE (role = ? OR role = 'admin') AND id <> ? AND status = 'active' ORDER BY workload ASC LIMIT 1")
+    .get(role, excludedId) as { id?: string } | undefined;
+
+  return row?.id ?? null;
 }
 
 export function updateEmployee(

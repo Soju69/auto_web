@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CarFront, ClipboardList, Gauge, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, Boxes, CarFront, ClipboardList, Gauge, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { adminNav } from "@/data/crm";
 import { canAccessAdminPath, getAuthSession } from "@/lib/auth-session";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import type { UserRole } from "@/types/user";
 
-const icons = [BarChart3, ClipboardList, Gauge, ShieldCheck, CarFront, Users];
+const icons = [BarChart3, ClipboardList, Gauge, ShieldCheck, CarFront, Boxes, Users];
 
 export function AdminSidebar() {
   const pathname = usePathname();

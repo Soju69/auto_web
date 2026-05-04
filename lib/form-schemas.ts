@@ -64,6 +64,7 @@ export const createEmployeeSchema = z.object({
   name: z.string().min(2, "Укажите ФИО"),
   email: z.string().email("Укажите email"),
   phone: z.string().optional().default(""),
+  password: z.string().min(6, "Минимум 6 символов"),
   role: z.enum(["admin", "sales_manager", "service_manager", "mechanic", "trade_in_appraiser"]),
   status: z.enum(["active", "vacation", "blocked"]).default("active")
 });

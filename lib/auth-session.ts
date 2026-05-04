@@ -74,7 +74,7 @@ export function canAccessAdminPath(role: UserRole, pathname: string) {
   }
 
   if (role === "service_manager" || role === "mechanic") {
-    return pathname.startsWith("/admin/service");
+    return pathname.startsWith("/admin/service") || pathname.startsWith("/admin/warehouse");
   }
 
   return pathname.startsWith("/admin/trade-in");
