@@ -8,6 +8,7 @@ export type AuthSession =
       clientId: string;
       name: string;
       phone: string;
+      email?: string;
     }
   | {
       type: "employee";

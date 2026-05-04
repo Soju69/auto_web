@@ -8,14 +8,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { roleLabels } from "@/data/crm";
 import { clearAuthSession, getDefaultAdminPath, saveAuthSession } from "@/lib/auth-session";
-import { createEmployeeSchema } from "@/lib/form-schemas";
 import { getSavedClientProfile, saveClientProfile } from "@/lib/client-profile";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { InputField } from "@/components/ui/InputField";
-import { Label } from "@/components/ui/label";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import type { UserRole } from "@/types/user";
+import type { User, UserRole } from "@/types/user";
 
 const employeeEmails = [
   "admin@autocitypro.ru",
@@ -43,41 +41,78 @@ const employeeRoleByEmail: Record<string, UserRole> = {
   "manager@autocitypro.ru": "sales_manager"
 };
 
+const optionalEmailSchema = z
+  .string()
+  .trim()
+  .optional()
+  .default("")
+  .refine((value) => !value || z.string().email().safeParse(value).success, "Укажите корректный email");
+
 const loginSchema = z.object({
   identifier: z.string().min(3, "Укажите email сотрудника или телефон клиента"),
   password: z.string().min(6, "Минимум 6 символов")
 });
 
-const employeeRegisterSchema = createEmployeeSchema.extend({
-  password: z.string().min(8, "Минимум 8 символов")
-});
-
 const clientRegisterSchema = z.object({
   name: z.string().min(2, "Укажите ФИО"),
-  phone: z.string().min(7, "Укажите телефон"),
+  phone: z.string().min(7, "Укажите телефон").refine((value) => normalizePhone(value).length >= 7, "Укажите корректный телефон"),
+  email: optionalEmailSchema,
   password: z.string().min(6, "Минимум 6 символов")
 });
 
-type AuthMode = "login" | "client-register" | "employee-register";
+type AuthMode = "login" | "client-register";
 type LoginFormValues = z.infer<typeof loginSchema>;
-type EmployeeRegisterValues = z.infer<typeof employeeRegisterSchema>;
 type ClientRegisterValues = z.infer<typeof clientRegisterSchema>;
-
-const employeeRoles = [
-  "sales_manager",
-  "service_manager",
-  "mechanic",
-  "trade_in_appraiser",
-  "admin"
-] as const;
+type EmployeeIdentityConflict = "phone" | "email" | null;
 
 function normalizePhone(value: string) {
   return value.replace(/\D/g, "");
 }
 
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
 function isEmployeeIdentifier(identifier: string) {
-  const normalized = identifier.trim().toLowerCase();
+  const normalized = normalizeEmail(identifier);
   return employeeEmails.includes(normalized) || normalized.endsWith("@autocitypro.ru");
+}
+
+async function getEmployees() {
+  const response = await fetch("/api/admin/users");
+
+  if (!response.ok) {
+    return [] as User[];
+  }
+
+  return (await response.json()) as User[];
+}
+
+async function getEmployeeConflict({
+  phone,
+  email
+}: {
+  phone: string;
+  email?: string;
+}): Promise<EmployeeIdentityConflict> {
+  const employees = await getEmployees();
+  const normalizedPhone = normalizePhone(phone);
+  const normalizedEmail = email ? normalizeEmail(email) : "";
+
+  for (const employee of employees) {
+    const employeePhone = employee.phone ? normalizePhone(employee.phone) : "";
+    const employeeEmail = normalizeEmail(employee.email);
+
+    if (normalizedPhone && employeePhone && normalizedPhone === employeePhone) {
+      return "phone";
+    }
+
+    if (normalizedEmail && normalizedEmail === employeeEmail) {
+      return "email";
+    }
+  }
+
+  return null;
 }
 
 export function LoginForm() {
@@ -90,15 +125,9 @@ export function LoginForm() {
   });
 
   const clientRegisterForm = useForm<ClientRegisterValues>({
-    resolver: zodResolver(clientRegisterSchema)
-  });
-
-  const employeeRegisterForm = useForm<EmployeeRegisterValues>({
-    resolver: zodResolver(employeeRegisterSchema),
+    resolver: zodResolver(clientRegisterSchema),
     defaultValues: {
-      role: "sales_manager",
-      status: "active",
-      phone: ""
+      email: ""
     }
   });
 
@@ -109,6 +138,7 @@ export function LoginForm() {
       loginForm.setValue("identifier", profile.phone);
       clientRegisterForm.setValue("name", profile.name);
       clientRegisterForm.setValue("phone", profile.phone);
+      clientRegisterForm.setValue("email", profile.email ?? "");
     }
   }, [clientRegisterForm, loginForm]);
 
@@ -117,12 +147,12 @@ export function LoginForm() {
     setServerMessage(null);
   }
 
-  function onLoginSubmit(values: LoginFormValues) {
+  async function onLoginSubmit(values: LoginFormValues) {
     const identifier = values.identifier.trim();
     clearAuthSession();
 
     if (isEmployeeIdentifier(identifier)) {
-      const email = identifier.toLowerCase();
+      const email = normalizeEmail(identifier);
       const role = employeeRoleByEmail[email] ?? "sales_manager";
       saveAuthSession({
         type: "employee",
@@ -130,23 +160,21 @@ export function LoginForm() {
         email,
         role
       });
-      setServerMessage("Вход сотрудника выполнен. Открываем рабочий раздел.");
       router.push(getDefaultAdminPath(role));
       return;
     }
 
     const savedProfile = getSavedClientProfile();
-    const savedPhone = savedProfile ? normalizePhone(savedProfile.phone) : "";
     const enteredPhone = normalizePhone(identifier);
 
-    if (savedProfile && enteredPhone && savedPhone === enteredPhone) {
+    if (savedProfile && enteredPhone && normalizePhone(savedProfile.phone) === enteredPhone) {
       saveAuthSession({
         type: "client",
         clientId: savedProfile.clientId,
         name: savedProfile.name,
-        phone: savedProfile.phone
+        phone: savedProfile.phone,
+        email: savedProfile.email
       });
-      setServerMessage("Вход клиента выполнен. Данные будут подставляться в заявки.");
       router.push("/account");
       return;
     }
@@ -156,51 +184,37 @@ export function LoginForm() {
     clientRegisterForm.setValue("phone", identifier);
   }
 
-  function onClientRegisterSubmit(values: ClientRegisterValues) {
-    const profile = saveClientProfile(values);
+  async function onClientRegisterSubmit(values: ClientRegisterValues) {
+    setServerMessage(null);
+
+    const conflict = await getEmployeeConflict({ phone: values.phone, email: values.email });
+
+    if (conflict === "phone") {
+      setServerMessage("Этот телефон уже закреплен за сотрудником. Используйте другой номер клиента.");
+      return;
+    }
+
+    if (conflict === "email") {
+      setServerMessage("Этот email уже используется сотрудником. Укажите другой email или оставьте поле пустым.");
+      return;
+    }
+
+    const profile = saveClientProfile({
+      ...values,
+      email: values.email || undefined
+    });
+
     if (profile) {
       saveAuthSession({
         type: "client",
         clientId: profile.clientId,
         name: profile.name,
-        phone: profile.phone
+        phone: profile.phone,
+        email: profile.email
       });
     }
-    setServerMessage("Клиент зарегистрирован. ФИО и телефон будут автоматически подставляться в формы.");
+
     router.push("/account");
-  }
-
-  async function onEmployeeRegisterSubmit(values: EmployeeRegisterValues) {
-    setServerMessage(null);
-
-    const employee = {
-      name: values.name,
-      email: values.email,
-      phone: values.phone,
-      role: values.role,
-      status: values.status
-    };
-    const response = await fetch("/api/admin/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(employee)
-    });
-
-    if (!response.ok) {
-      setServerMessage("Не удалось зарегистрировать сотрудника. Проверьте email или попробуйте другой.");
-      return;
-    }
-
-    saveAuthSession({
-      type: "employee",
-      name: values.name,
-      email: values.email,
-      role: values.role
-    });
-    setServerMessage("Сотрудник зарегистрирован. Открываем админку.");
-    router.push(getDefaultAdminPath(values.role));
   }
 
   return (
@@ -216,20 +230,18 @@ export function LoginForm() {
         <div>
           <h1 className="font-display text-2xl font-semibold">Единый вход</h1>
           <p className="mt-2 text-sm leading-6 text-luxury-soft">
-            Введите email сотрудника, чтобы попасть в админку, или телефон клиента, чтобы открыть клиентский сценарий с автоподстановкой данных.
+            Сотрудники входят по корпоративному email. Клиенты входят по телефону или регистрируются с обязательным
+            телефоном и email по желанию.
           </p>
         </div>
       </div>
 
-      <div className="mb-6 grid gap-1 rounded-2xl border border-white/10 bg-white/[0.04] p-1 sm:grid-cols-3">
+      <div className="mb-6 grid gap-1 rounded-2xl border border-white/10 bg-white/[0.04] p-1 sm:grid-cols-2">
         <ModeButton active={mode === "login"} onClick={() => switchMode("login")}>
           Войти
         </ModeButton>
         <ModeButton active={mode === "client-register"} onClick={() => switchMode("client-register")}>
-          Клиент
-        </ModeButton>
-        <ModeButton active={mode === "employee-register"} onClick={() => switchMode("employee-register")}>
-          Сотрудник
+          Регистрация клиента
         </ModeButton>
       </div>
 
@@ -274,6 +286,14 @@ export function LoginForm() {
             {...clientRegisterForm.register("phone")}
           />
           <InputField
+            label="Email по желанию"
+            id="client-email"
+            type="email"
+            placeholder="client@example.com"
+            error={clientRegisterForm.formState.errors.email?.message}
+            {...clientRegisterForm.register("email")}
+          />
+          <InputField
             label="Пароль"
             id="client-password"
             type="password"
@@ -284,64 +304,6 @@ export function LoginForm() {
           <StatusMessage message={serverMessage} />
           <PrimaryButton type="submit" className="w-full justify-center">
             Зарегистрироваться клиентом
-          </PrimaryButton>
-        </form>
-      ) : null}
-
-      {mode === "employee-register" ? (
-        <form onSubmit={employeeRegisterForm.handleSubmit(onEmployeeRegisterSubmit)} className="grid gap-5">
-          <InputField
-            label="ФИО"
-            id="employee-name"
-            placeholder="Алексей Морозов"
-            error={employeeRegisterForm.formState.errors.name?.message}
-            {...employeeRegisterForm.register("name")}
-          />
-          <div className="grid gap-5 md:grid-cols-2">
-            <InputField
-              label="Email"
-              id="employee-email"
-              type="email"
-              placeholder="manager@autocitypro.ru"
-              error={employeeRegisterForm.formState.errors.email?.message}
-              {...employeeRegisterForm.register("email")}
-            />
-            <InputField
-              label="Телефон"
-              id="employee-phone"
-              placeholder="+7 473 200-80-08"
-              error={employeeRegisterForm.formState.errors.phone?.message}
-              {...employeeRegisterForm.register("phone")}
-            />
-          </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="employee-role">Роль</Label>
-              <select
-                id="employee-role"
-                className="h-12 w-full rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm text-white outline-none transition focus:border-luxury-champagne/70 focus:ring-2 focus:ring-luxury-champagne/20"
-                {...employeeRegisterForm.register("role")}
-              >
-                {employeeRoles.map((role) => (
-                  <option key={role} value={role} className="bg-luxury-main">
-                    {roleLabels[role]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <InputField
-              label="Пароль"
-              id="employee-password"
-              type="password"
-              placeholder="Минимум 8 символов"
-              error={employeeRegisterForm.formState.errors.password?.message}
-              {...employeeRegisterForm.register("password")}
-            />
-          </div>
-          <input type="hidden" value="active" {...employeeRegisterForm.register("status")} />
-          <StatusMessage message={serverMessage} />
-          <PrimaryButton type="submit" disabled={employeeRegisterForm.formState.isSubmitting} className="w-full justify-center">
-            {employeeRegisterForm.formState.isSubmitting ? "Регистрируем..." : "Зарегистрироваться сотрудником"}
           </PrimaryButton>
         </form>
       ) : null}

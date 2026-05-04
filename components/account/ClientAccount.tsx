@@ -37,7 +37,8 @@ export function ClientAccount() {
     setProfile(getSavedClientProfile() ?? {
       clientId: session.clientId,
       name: session.name,
-      phone: session.phone
+      phone: session.phone,
+      email: session.email
     });
   }, [router]);
 
@@ -65,6 +66,7 @@ export function ClientAccount() {
                 {profile.name}
               </h1>
               <p className="mt-3 text-luxury-soft">{profile.phone}</p>
+              {profile.email ? <p className="mt-1 text-luxury-soft">{profile.email}</p> : null}
               <p className="mt-2 text-sm text-white/45">ID клиента: {profile.clientId}</p>
             </div>
             <button
