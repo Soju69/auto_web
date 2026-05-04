@@ -34,11 +34,8 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button asChild variant="glass" size="sm" className="hidden sm:inline-flex">
-              <Link href="/login">Войти</Link>
-            </Button>
             <Button asChild variant="accent" size="sm">
-              <Link href="/catalog">Каталог</Link>
+              <Link href="/login">Вход / регистрация</Link>
             </Button>
             <Button
               variant="glass"

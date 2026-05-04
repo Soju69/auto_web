@@ -2,10 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, CreditCard, Repeat2, WalletCards } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { carInquirySchema, type CarInquiryValues } from "@/lib/form-schemas";
-import { getSavedClientProfile, saveClientProfile } from "@/lib/client-profile";
+import { getAuthSession, type AuthSession } from "@/lib/auth-session";
 import { InputField } from "@/components/ui/InputField";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SecondaryButton } from "@/components/ui/SecondaryButton";
@@ -26,8 +27,10 @@ export function CarInquiryForm({
   carId: string;
   carLabel: string;
 }) {
+  const router = useRouter();
   const [requestType, setRequestType] = useState<RequestType>("purchase");
   const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const [clientSession, setClientSession] = useState<Extract<AuthSession, { type: "client" }> | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const {
     register,
@@ -51,25 +54,34 @@ export function CarInquiryForm({
   function selectType(nextType: RequestType) {
     setRequestType(nextType);
     setValue("requestType", nextType);
-    setServerMessage(`Выбран сценарий: ${requestTypeLabels[nextType]}. Заполните ФИО и телефон ниже.`);
+    setServerMessage(
+      clientSession
+        ? `Выбран сценарий: ${requestTypeLabels[nextType]}. Данные клиента уже подставлены из личного кабинета.`
+        : `Выбран сценарий: ${requestTypeLabels[nextType]}. Для отправки заявки войдите или зарегистрируйтесь.`
+    );
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   useEffect(() => {
-    const profile = getSavedClientProfile();
+    const session = getAuthSession();
 
-    if (!profile) {
+    if (!session || session.type !== "client") {
       return;
     }
 
-    setValue("name", profile.name);
-    setValue("phone", profile.phone);
-    setValue("clientId", profile.clientId);
+    setClientSession(session);
+    setValue("name", session.name);
+    setValue("phone", session.phone);
+    setValue("clientId", session.clientId);
   }, [setValue]);
 
   async function onSubmit(values: CarInquiryValues) {
     setServerMessage(null);
-    const profile = saveClientProfile(values);
+
+    if (!clientSession) {
+      router.push("/login");
+      return;
+    }
 
     const response = await fetch("/api/public/car-inquiry", {
       method: "POST",
@@ -78,7 +90,9 @@ export function CarInquiryForm({
       },
       body: JSON.stringify({
         ...values,
-        clientId: profile?.clientId ?? values.clientId
+        name: clientSession.name,
+        phone: clientSession.phone,
+        clientId: clientSession.clientId
       })
     });
 
@@ -88,15 +102,15 @@ export function CarInquiryForm({
     }
 
     reset({
-      name: "",
-      phone: "",
+      name: clientSession.name,
+      phone: clientSession.phone,
       requestType,
       carId,
       carLabel,
       comment: "",
       preferredDate: "",
       preferredTime: "",
-      clientId: profile?.clientId ?? values.clientId
+      clientId: clientSession.clientId
     });
     setServerMessage("Заявка зафиксирована. Менеджер увидит её в CRM и свяжется с вами.");
   }
@@ -143,32 +157,38 @@ export function CarInquiryForm({
         <input type="hidden" value={carLabel} {...register("carLabel")} />
         <input type="hidden" value={requestType} {...register("requestType")} />
         <input type="hidden" {...register("clientId")} />
+        <input type="hidden" {...register("name")} />
+        <input type="hidden" {...register("phone")} />
 
         <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-luxury-champagne">
             {requestTypeLabels[requestType]}
           </p>
           <p className="mt-2 text-sm leading-6 text-luxury-soft">
-            {requestType === "test-drive"
-              ? "Выберите удобную дату и время, а мы подтвердим слот и подготовим автомобиль."
-              : "Оставьте контакты, и менеджер соберёт предложение по автомобилю, кредиту и срокам выдачи."}
+            {clientSession
+              ? requestType === "test-drive"
+                ? "Выберите удобную дату и время. ФИО и телефон будут взяты из личного кабинета."
+                : "Напишите комментарий к заявке. ФИО и телефон будут взяты из личного кабинета."
+              : "Для отправки заявки сначала войдите или зарегистрируйтесь. После входа ФИО и телефон подставятся автоматически."}
           </p>
         </div>
 
-        <InputField
-          id="car-inquiry-name"
-          label="ФИО"
-          placeholder="Алексей Морозов"
-          error={errors.name?.message}
-          {...register("name")}
-        />
-        <InputField
-          id="car-inquiry-phone"
-          label="Телефон"
-          placeholder="+7 999 000-00-00"
-          error={errors.phone?.message}
-          {...register("phone")}
-        />
+        {clientSession ? (
+          <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-luxury-champagne">
+              Клиент
+            </p>
+            <p className="mt-2 font-medium text-white">{clientSession.name}</p>
+            <p className="mt-1 text-sm text-luxury-soft">{clientSession.phone}</p>
+          </div>
+        ) : (
+          <div className="rounded-[1.5rem] border border-luxury-champagne/25 bg-luxury-champagne/[0.08] p-4">
+            <p className="font-medium text-white">Войдите или зарегистрируйтесь</p>
+            <p className="mt-2 text-sm leading-6 text-luxury-soft">
+              Нажмите кнопку ниже, заполните ФИО и телефон один раз, затем вернитесь к заявке.
+            </p>
+          </div>
+        )}
 
         {requestType === "test-drive" ? (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -205,9 +225,15 @@ export function CarInquiryForm({
             {serverMessage ??
               "Заявка сразу попадёт в CRM, а менеджер увидит сценарий обращения и модель автомобиля."}
           </p>
-          <PrimaryButton type="submit" disabled={isSubmitting} className="justify-center">
-            {isSubmitting ? "Отправляем..." : "Оставить заявку"}
-          </PrimaryButton>
+          {clientSession ? (
+            <PrimaryButton type="submit" disabled={isSubmitting} className="justify-center">
+              {isSubmitting ? "Отправляем..." : "Оставить заявку"}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton type="button" onClick={() => router.push("/login")} className="justify-center">
+              Вход / регистрация
+            </PrimaryButton>
+          )}
         </div>
       </form>
     </div>

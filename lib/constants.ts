@@ -20,8 +20,7 @@ export const navLinks = [
   { href: "/insurance", label: "Страхование" },
   { href: "/consultation", label: "Консультация" },
   { href: "/about", label: "О нас" },
-  { href: "/contact", label: "Контакты" },
-  { href: "/login", label: "Вход" }
+  { href: "/contact", label: "Контакты" }
 ] as const;
 
 export const whyChooseUs = [
