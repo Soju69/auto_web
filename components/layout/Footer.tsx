@@ -33,7 +33,7 @@ export function Footer() {
           <p className="mt-4 text-sm leading-7 text-luxury-soft">
             +7 (473) 200-80-08
             <br />
-            concierge@aurummotors.ru
+            concierge@autocitypro.ru
             <br />
             Воронежская область, г.о. город Воронеж, г. Воронеж, пр-кт Патриотов, д. 47, офис 106
           </p>

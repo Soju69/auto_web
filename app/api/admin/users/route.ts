@@ -16,6 +16,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const created = createEmployee(parsed.data);
-  return NextResponse.json(created);
+  try {
+    const created = createEmployee(parsed.data);
+    return NextResponse.json(created);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Не удалось зарегистрировать сотрудника" },
+      { status: 409 }
+    );
+  }
 }

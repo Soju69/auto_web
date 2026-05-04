@@ -45,7 +45,7 @@ export const tradeInFormSchema = z.object({
 });
 
 export const createEmployeeSchema = z.object({
-  name: z.string().min(2, "Укажите имя"),
+  name: z.string().min(2, "Укажите ФИО"),
   email: z.string().email("Укажите email"),
   phone: z.string().optional().default(""),
   role: z.enum(["admin", "sales_manager", "service_manager", "mechanic", "trade_in_appraiser"]),

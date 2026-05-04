@@ -29,8 +29,6 @@ const statuses: UserStatus[] = ["active", "vacation", "blocked"];
 
 export function TeamTable() {
   const users = useAdminStore((state) => state.users);
-  const updateUserRole = useAdminStore((state) => state.updateUserRole);
-  const updateUserStatus = useAdminStore((state) => state.updateUserStatus);
   const createUser = useAdminStore((state) => state.createUser);
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const {
@@ -72,7 +70,7 @@ export function TeamTable() {
         <div>
           <h2 className="font-display text-2xl font-semibold">Сотрудники и права</h2>
           <p className="mt-2 text-sm text-luxury-soft">
-            Управление ролями, текущим статусом сотрудников и распределением нагрузки по отделам.
+            Добавление сотрудников и просмотр ролей. Изменение роли существующего сотрудника в демо-версии недоступно без отдельной процедуры администратора.
           </p>
         </div>
 
@@ -88,7 +86,7 @@ export function TeamTable() {
             <InputField
               id="team-email"
               label="Email"
-              placeholder="manager@aurummotors.ru"
+              placeholder="manager@autocitypro.ru"
               error={errors.email?.message}
               {...register("email")}
             />
@@ -162,30 +160,14 @@ export function TeamTable() {
                   {user.phone ? <p className="mt-2 text-xs text-luxury-soft">{user.phone}</p> : null}
                 </td>
                 <td className="py-4 pr-6">
-                  <select
-                    value={user.role}
-                    onChange={(event) => void updateUserRole(user.id, event.target.value as UserRole)}
-                    className="h-11 min-w-[220px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm text-white outline-none transition focus:border-luxury-champagne/70 focus:ring-2 focus:ring-luxury-champagne/20"
-                  >
-                    {roles.map((role) => (
-                      <option key={role} value={role} className="bg-luxury-main">
-                        {roleLabels[role]}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="inline-flex min-h-11 min-w-[220px] items-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white">
+                    {roleLabels[user.role]}
+                  </div>
                 </td>
                 <td className="py-4 pr-6">
-                  <select
-                    value={user.status}
-                    onChange={(event) => void updateUserStatus(user.id, event.target.value as UserStatus)}
-                    className="h-11 min-w-[220px] rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm text-white outline-none transition focus:border-luxury-champagne/70 focus:ring-2 focus:ring-luxury-champagne/20"
-                  >
-                    {statuses.map((status) => (
-                      <option key={status} value={status} className="bg-luxury-main">
-                        {statusLabels[status]}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="inline-flex min-h-11 min-w-[220px] items-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white">
+                    {statusLabels[user.status]}
+                  </div>
                 </td>
                 <td className="py-4 pr-0">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">

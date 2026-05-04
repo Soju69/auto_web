@@ -11,7 +11,7 @@ export function WhyChooseUsSection() {
         <Reveal>
           <SectionTitle
             align="center"
-            eyebrow="Почему Aurum"
+            eyebrow="Почему АВТО СИТИ ПРО"
             title="Меньше обещаний. Больше контроля в каждом шаге."
             description="Мы оставили только то, что влияет на доверие: проверка, сделка, скорость ответа и сопровождение после покупки."
           />

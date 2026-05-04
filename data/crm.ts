@@ -5,7 +5,7 @@ export const crmUsers: User[] = [
   {
     id: "u-admin",
     name: "Мария Белова",
-    email: "admin@aurummotors.ru",
+    email: "admin@autocitypro.ru",
     role: "admin",
     status: "active",
     workload: 4
@@ -13,7 +13,7 @@ export const crmUsers: User[] = [
   {
     id: "u-sales-1",
     name: "Илья Орлов",
-    email: "sales1@aurummotors.ru",
+    email: "sales1@autocitypro.ru",
     role: "sales_manager",
     status: "active",
     workload: 7
@@ -21,7 +21,7 @@ export const crmUsers: User[] = [
   {
     id: "u-sales-2",
     name: "Анна Трофимова",
-    email: "sales2@aurummotors.ru",
+    email: "sales2@autocitypro.ru",
     role: "sales_manager",
     status: "active",
     workload: 5
@@ -29,7 +29,7 @@ export const crmUsers: User[] = [
   {
     id: "u-service",
     name: "Роман Соколов",
-    email: "service@aurummotors.ru",
+    email: "service@autocitypro.ru",
     role: "service_manager",
     status: "active",
     workload: 6
@@ -37,7 +37,7 @@ export const crmUsers: User[] = [
   {
     id: "u-service-2",
     name: "Наталья Егорова",
-    email: "service2@aurummotors.ru",
+    email: "service2@autocitypro.ru",
     role: "service_manager",
     status: "active",
     workload: 4
@@ -45,7 +45,7 @@ export const crmUsers: User[] = [
   {
     id: "u-mechanic",
     name: "Олег Сафонов",
-    email: "mechanic@aurummotors.ru",
+    email: "mechanic@autocitypro.ru",
     role: "mechanic",
     status: "active",
     workload: 8
@@ -53,7 +53,7 @@ export const crmUsers: User[] = [
   {
     id: "u-mechanic-2",
     name: "Кирилл Лавров",
-    email: "mechanic2@aurummotors.ru",
+    email: "mechanic2@autocitypro.ru",
     role: "mechanic",
     status: "active",
     workload: 5
@@ -61,7 +61,7 @@ export const crmUsers: User[] = [
   {
     id: "u-appraiser",
     name: "Дмитрий Волков",
-    email: "tradein@aurummotors.ru",
+    email: "tradein@autocitypro.ru",
     role: "trade_in_appraiser",
     status: "active",
     workload: 3
@@ -69,7 +69,7 @@ export const crmUsers: User[] = [
   {
     id: "u-appraiser-2",
     name: "Елена Самойлова",
-    email: "tradein2@aurummotors.ru",
+    email: "tradein2@autocitypro.ru",
     role: "trade_in_appraiser",
     status: "active",
     workload: 5

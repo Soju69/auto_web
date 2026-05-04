@@ -37,7 +37,7 @@ export function HeroSection() {
               Автомобили будущего. Сделка без лишнего шума.
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-luxury-soft md:text-xl">
-              Aurum объединяет каталог, Trade-In, кредит, тест-драйв и сервис в один спокойный
+              АВТО СИТИ ПРО объединяет каталог, Trade-In, кредит, тест-драйв и сервис в один спокойный
               цифровой сценарий для клиентов, которые ценят время и точность.
             </p>
             <div className="mt-9 flex flex-col gap-4 sm:flex-row">
@@ -116,7 +116,7 @@ export function HeroSection() {
                   <BadgeCheck className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Проверено Aurum</p>
+                  <p className="text-sm font-semibold text-white">Проверено АВТО СИТИ ПРО</p>
                   <p className="text-xs text-luxury-soft">диагностика, документы, гарантия</p>
                 </div>
               </div>

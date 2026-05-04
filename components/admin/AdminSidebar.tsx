@@ -3,14 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, CarFront, ClipboardList, Gauge, ShieldCheck, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import { adminNav } from "@/data/crm";
+import { canAccessAdminPath, getAuthSession } from "@/lib/auth-session";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/GlassCard";
+import type { UserRole } from "@/types/user";
 
 const icons = [BarChart3, ClipboardList, Gauge, ShieldCheck, CarFront, Users];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const [role, setRole] = useState<UserRole | null>(null);
+
+  useEffect(() => {
+    const session = getAuthSession();
+    setRole(session?.type === "employee" ? session.role : null);
+  }, []);
+
+  const visibleNav = role
+    ? adminNav
+        .map((item, index) => ({ ...item, Icon: icons[index] }))
+        .filter((item) => canAccessAdminPath(role, item.href))
+    : [];
 
   return (
     <GlassCard className="sticky top-6 p-4">
@@ -19,14 +34,14 @@ export function AdminSidebar() {
           <ShieldCheck className="h-5 w-5 text-luxury-champagne" aria-hidden="true" />
         </span>
         <div>
-          <p className="font-display text-lg font-semibold">Aurum CRM</p>
+          <p className="font-display text-lg font-semibold">АВТО СИТИ ПРО CRM</p>
           <p className="text-sm text-luxury-soft">Внутренняя рабочая зона</p>
         </div>
       </div>
 
       <nav className="grid gap-2">
-        {adminNav.map((item, index) => {
-          const Icon = icons[index];
+        {visibleNav.map((item) => {
+          const Icon = item.Icon;
           const isActive = pathname === item.href;
 
           return (

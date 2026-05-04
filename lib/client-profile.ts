@@ -6,7 +6,7 @@ export type SavedClientProfile = {
   phone: string;
 };
 
-const storageKey = "aurum-client-profile";
+const storageKey = "auto-city-pro-client-profile";
 
 function createClientId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {

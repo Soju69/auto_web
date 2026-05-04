@@ -3,8 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Aurum Motors | Премиальный автомобильный шоурум",
-    template: "%s | Aurum Motors"
+    default: "АВТО СИТИ ПРО | Автомобильный салон",
+    template: "%s | АВТО СИТИ ПРО"
   },
   description:
     "Премиальный автомобильный шоурум с каталогом, trade-in, сервисом и персональным сопровождением сделки.",

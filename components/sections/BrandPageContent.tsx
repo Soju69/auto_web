@@ -75,7 +75,7 @@ export function BrandPageContent({ brand, cars }: BrandPageContentProps) {
                   {model}
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-luxury-soft">
-                  Модель доступна в подборке Aurum с проверкой, документами и готовым сценарием сделки.
+                  Модель доступна в подборке АВТО СИТИ ПРО с проверкой, документами и готовым сценарием сделки.
                 </p>
               </GlassCard>
             ))}

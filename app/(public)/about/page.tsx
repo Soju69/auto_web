@@ -34,7 +34,7 @@ export default function AboutPage() {
         <Reveal>
           <SectionTitle
             eyebrow="О салоне"
-            title="Aurum Motors — цифровой автосалон с вниманием уровня private service."
+            title="АВТО СИТИ ПРО — цифровой автосалон с вниманием уровня private service."
             description="Мы собираем автомобили, сервис и сопровождение в единый опыт, где важны доверие, спокойный ритм и качество каждой детали."
           />
         </Reveal>

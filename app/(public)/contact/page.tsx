@@ -14,12 +14,12 @@ export default function ContactPage() {
             <div className="sticky top-32">
               <SectionTitle
                 eyebrow="Контакты"
-                title="Свяжитесь с персональным советником Aurum Motors."
+                title="Свяжитесь с персональным советником АВТО СИТИ ПРО."
                 description="Поможем подобрать автомобиль, согласовать показ, trade-in, сервис, страхование, консультацию или тест-драйв в удобное для вас время."
               />
               <div className="mt-8 grid gap-4">
                 <ContactItem icon={Phone} label="Телефон" value="+7 (473) 200-80-08" />
-                <ContactItem icon={Mail} label="Email" value="concierge@aurummotors.ru" />
+                <ContactItem icon={Mail} label="Email" value="concierge@autocitypro.ru" />
                 <ContactItem
                   icon={MapPin}
                   label="Шоурум"

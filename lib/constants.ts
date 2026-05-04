@@ -10,7 +10,7 @@ import {
   Wrench
 } from "lucide-react";
 
-export const BRAND_NAME = "Aurum Motors";
+export const BRAND_NAME = "АВТО СИТИ ПРО";
 
 export const navLinks = [
   { href: "/", label: "Главная" },
@@ -21,7 +21,7 @@ export const navLinks = [
   { href: "/consultation", label: "Консультация" },
   { href: "/about", label: "О нас" },
   { href: "/contact", label: "Контакты" },
-  { href: "/login", label: "Вход сотрудника" }
+  { href: "/login", label: "Вход" }
 ] as const;
 
 export const whyChooseUs = [
@@ -42,7 +42,7 @@ export const whyChooseUs = [
   },
   {
     title: "Остаемся после покупки",
-    description: "Сервис, гарантия и сопровождение остаются внутри одной экосистемы Aurum.",
+    description: "Сервис, гарантия и сопровождение остаются внутри одной экосистемы АВТО СИТИ ПРО.",
     icon: Wrench
   }
 ];

@@ -68,7 +68,7 @@ type DbPhotoRow = {
 };
 
 const storageDir = path.join(process.cwd(), "storage");
-const databasePath = path.join(storageDir, "aurum.sqlite");
+const databasePath = path.join(storageDir, "auto-city-pro.sqlite");
 
 let database: DatabaseSync | null = null;
 let databaseInitialized = false;
