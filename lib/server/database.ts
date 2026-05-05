@@ -6,6 +6,7 @@ import { initialInventory } from "@/data/inventory";
 import { initialServiceOrders } from "@/data/service";
 import { initialTradeInRequests } from "@/data/trade-in";
 import type { CreateEmployeeValues, CarInquiryValues, ContactFormValues, ServiceFormValues, TradeInFormValues } from "@/lib/form-schemas";
+import { normalizePhone } from "@/lib/phone";
 import type { InventoryItem } from "@/types/inventory-item";
 import type { Lead } from "@/types/lead";
 import type { ServiceOrder } from "@/types/service-order";
@@ -507,6 +508,19 @@ export function createEmployee(values: CreateEmployeeValues) {
   const db = getDatabase();
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
+  const normalizedNewPhone = normalizePhone(values.phone);
+
+  if (normalizedNewPhone) {
+    const employees = db.prepare("SELECT id, phone FROM employees WHERE phone IS NOT NULL").all() as Array<{
+      id: string;
+      phone: string;
+    }>;
+    const phoneExists = employees.some((employee) => normalizePhone(employee.phone) === normalizedNewPhone);
+
+    if (phoneExists) {
+      throw new Error("Телефон уже закреплен за другим сотрудником");
+    }
+  }
 
   db.prepare(`
     INSERT INTO employees (id, name, email, phone, password, avatar_url, role, status, workload, created_at, updated_at)

@@ -15,7 +15,6 @@ export default function CatalogPage() {
           <SectionTitle
             eyebrow="Каталог"
             title="Премиальная подборка KIA, Hyundai, Xiaomi Auto и Zeekr."
-            description="Актуальные автомобили в единой витрине: с понятными характеристиками, аккуратными карточками и отдельными страницами каждой модели."
           />
         </Reveal>
 

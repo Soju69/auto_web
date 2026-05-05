@@ -31,8 +31,16 @@ npm install
 2. Создайте файл `.env` в корне проекта:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/auto_city_pro?schema=public"
 ```
+
+Для PostgreSQL сначала создайте базу `auto_city_pro`, затем выполните SQL-скрипт:
+
+```bash
+psql -U postgres -d auto_city_pro -f database/postgres-schema.sql
+```
+
+Код структуры БД находится в `database/postgres-schema.sql`, Prisma-схема PostgreSQL находится в `prisma/schema.prisma`.
 
 3. Запустите локальный сервер:
 

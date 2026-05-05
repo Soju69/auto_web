@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum UserRole {
@@ -69,11 +69,17 @@ enum InventoryStatus {
   hidden
 }
 
+enum WarehouseCategory {
+  part
+  accessory
+}
+
 model Employee {
   id                   String          @id
   name                 String
   email                String          @unique
   phone                String?
+  password             String          @default("admin123")
   avatarUrl            String?
   role                 UserRole
   status               UserStatus
@@ -85,6 +91,16 @@ model Employee {
   mechanicOrders       ServiceOrder[]  @relation("ServiceMechanic")
   tradeInRequests      TradeInRequest[] @relation("TradeInAppraiser")
   inventoryItems       InventoryItem[] @relation("InventoryManager")
+}
+
+model Client {
+  id        String   @id
+  name      String
+  phone     String   @unique
+  email     String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Lead {
@@ -161,4 +177,19 @@ model InventoryItem {
   manager    Employee?       @relation("InventoryManager", fields: [managerId], references: [id], onDelete: SetNull)
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
+}
+
+model WarehouseItem {
+  id             String            @id
+  sku            String            @unique
+  name           String
+  category       WarehouseCategory
+  compatibleWith String
+  quantity       Int
+  minQuantity    Int
+  unit           String
+  location       String
+  supplier       String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }

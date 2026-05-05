@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isRussianPhoneComplete } from "@/lib/phone";
 
 function isValidServiceDate(value: string) {
   const selectedDate = new Date(`${value}T00:00:00`);
@@ -63,7 +64,11 @@ export const tradeInFormSchema = z.object({
 export const createEmployeeSchema = z.object({
   name: z.string().min(2, "Укажите ФИО"),
   email: z.string().email("Укажите email"),
-  phone: z.string().optional().default(""),
+  phone: z
+    .string()
+    .optional()
+    .default("")
+    .refine((value) => !value || isRussianPhoneComplete(value), "Телефон должен содержать 11 цифр"),
   password: z.string().min(6, "Минимум 6 символов"),
   role: z.enum(["admin", "sales_manager", "service_manager", "mechanic", "trade_in_appraiser"]),
   status: z.enum(["active", "vacation", "blocked"]).default("active")

@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createEmployeeSchema, type CreateEmployeeValues } from "@/lib/form-schemas";
+import { formatRussianPhoneInput } from "@/lib/phone";
 import { roleLabels } from "@/data/crm";
 import { useAdminStore } from "@/hooks/use-admin-store";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -38,6 +39,7 @@ export function TeamTable() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<CreateEmployeeValues>({
     resolver: zodResolver(createEmployeeSchema),
@@ -51,6 +53,16 @@ export function TeamTable() {
 
   async function onCreate(values: CreateEmployeeValues) {
     setServerMessage(null);
+
+    const normalizedPhone = values.phone.replace(/\D/g, "");
+    const phoneOwner = normalizedPhone
+      ? users.find((user) => user.phone?.replace(/\D/g, "") === normalizedPhone)
+      : null;
+
+    if (phoneOwner) {
+      setServerMessage("Этот телефон уже закреплен за другим сотрудником.");
+      return;
+    }
 
     try {
       await createUser(values);
@@ -134,8 +146,14 @@ export function TeamTable() {
               id="team-phone"
               label="Телефон"
               placeholder="+7 999 000-00-00"
+              inputMode="tel"
+              maxLength={16}
               error={errors.phone?.message}
-              {...register("phone")}
+              {...register("phone", {
+                onChange: (event) => {
+                  setValue("phone", formatRussianPhoneInput(event.target.value), { shouldValidate: true });
+                }
+              })}
             />
 
             <label className="grid gap-2">
